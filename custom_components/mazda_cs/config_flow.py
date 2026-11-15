@@ -306,41 +306,41 @@ class MazdaOAuth2FlowHandler(
 
         # No email in the title: HA core puts entry titles in its warning logs.
         title = f"Mazda ({user_id[:8]})"
+
+        async def _token_provider():
+            return data["token"]["access_token"]
+
+        # getUserInfo only needs auth + enc keys, not a session ID —
+        # does not need to attach() here.  attach() here may trigger
+        # "multiple devices detected", but needs further evaluation.
+        client = MazdaAPI(user_id, self._region, _token_provider)
         try:
-
-            async def _token_provider():
-                return data["token"]["access_token"]
-
-            # getUserInfo only needs auth + enc keys, not a session ID — 
-            # does not need to attach() here.  attach() here may trigger 
-            # "multiple devices detected", but needs further evaluation.
-            client = MazdaAPI(user_id, self._region, _token_provider)
-            user_info = await client.get_user_info()
-            await client.close()
-            cust_id = user_info.get("custId", "")
-            if cust_id:
-                data["conductor_customer_id"] = cust_id
-            usher_id = user_info.get("usherId", "")
-            if usher_id:
-                data["conductor_usher_id"] = usher_id
-        except Exception:  # noqa: BLE001
-            _LOGGER.debug(
-                "Could not fetch user info; Conductor customer IDs left unset"
-            )
-
-        # non-MNAO regions use internalUserId (partner2Id) for Conductor userId
-        if self._region != "MNAO":
             try:
-                client = MazdaAPI(user_id, self._region, _token_provider)
-                cv_ids = await client.get_cv_user_ids()
-                await client.close()
-                internal_user_id = str(
-                    cv_ids.get("data", {}).get("customerInfo", {}).get("internalUserId", "")
-                )
-                if internal_user_id:
-                    data["conductor_internal_id"] = internal_user_id
+                user_info = await client.get_user_info()
+                cust_id = user_info.get("custId", "")
+                if cust_id:
+                    data["conductor_customer_id"] = cust_id
+                usher_id = user_info.get("usherId", "")
+                if usher_id:
+                    data["conductor_usher_id"] = usher_id
             except Exception:  # noqa: BLE001
-                _LOGGER.debug("Could not fetch internalUserId for non-MNAO region")
+                _LOGGER.debug(
+                    "Could not fetch user info; Conductor customer IDs left unset"
+                )
+
+            # non-MNAO regions use internalUserId (partner2Id) for Conductor userId
+            if self._region != "MNAO":
+                try:
+                    cv_ids = await client.get_cv_user_ids()
+                    internal_user_id = str(
+                        cv_ids.get("data", {}).get("customerInfo", {}).get("internalUserId", "")
+                    )
+                    if internal_user_id:
+                        data["conductor_internal_id"] = internal_user_id
+                except Exception:  # noqa: BLE001
+                    _LOGGER.debug("Could not fetch internalUserId for non-MNAO region")
+        finally:
+            await client.close()
 
         return self.async_create_entry(
             title=title,
