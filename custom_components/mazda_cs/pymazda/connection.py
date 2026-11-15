@@ -27,6 +27,9 @@ from .exceptions import (
 from .sensordata.sensor_data_builder import SensorDataBuilder
 from .ssl_context_configurator.ssl_context_configurator import SSLContextConfigurator
 
+# Per request, because HA's shared session keeps aiohttp's 5-minute default.
+_TIMEOUT = aiohttp.ClientTimeout(total=30)
+
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 ssl_context.load_default_certs()
 ssl_context.set_ciphers(
@@ -501,9 +504,11 @@ class Connection:
             headers=headers,
             data=encrypted_body_str,
             ssl=ssl_context,
+            timeout=_TIMEOUT,
         )
 
         if response.status == 429:
+            response.release()
             raise MazdaRateLimitException(
                 "Rate limited by Mazda API (429) — will retry on next cycle"
             )
@@ -609,7 +614,7 @@ class Connection:
             headers["sign"],
         )
         response = await self._session.request(
-            method, full_url, headers=headers, data="", ssl=ssl_context
+            method, full_url, headers=headers, data="", ssl=ssl_context, timeout=_TIMEOUT
         )
         response_json = await response.json()
         # The payload decrypts to the API keys; log only the outcome.
