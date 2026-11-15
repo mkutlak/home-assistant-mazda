@@ -151,6 +151,8 @@ APP_OS = "ANDROID"
 APP_VERSION = "10.0.2"
 
 MAX_RETRIES = 1
+# Seconds to stay silent after a 429 (HTTP rate limit) from Mazda.
+RATE_LIMIT_COOLDOWN = 900
 
 _LOG_REDACT_KEYS = {
     "vin",
@@ -223,6 +225,7 @@ class Connection:
 
         self.access_token = None
         self._request_lock = asyncio.Lock()
+        self._rate_limited_until = 0.0
 
         self.sensor_data_builder = SensorDataBuilder()
 
@@ -453,6 +456,11 @@ class Connection:
         needs_keys=True,
         needs_auth=False,
     ):
+        if time.monotonic() < self._rate_limited_until:
+            raise MazdaRateLimitException(
+                "Rate limited by Mazda API (429) — backing off before the next request"
+            )
+
         timestamp = self.__get_timestamp_str_ms()
         self.logger.debug(
             "Request details - URI: %s, method: %s, timestamp: %s",
@@ -528,6 +536,7 @@ class Connection:
 
         if response.status == 429:
             response.release()
+            self._rate_limited_until = time.monotonic() + RATE_LIMIT_COOLDOWN
             raise MazdaRateLimitException(
                 "Rate limited by Mazda API (429) — will retry on next cycle"
             )
