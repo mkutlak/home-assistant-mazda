@@ -1,5 +1,6 @@
 """Tests for ``MazdaSensorEntity`` availability after a field disappears."""
 
+import datetime
 import logging
 from unittest.mock import AsyncMock
 
@@ -42,6 +43,18 @@ async def test_sensor_unavailable_when_field_disappears(hass: HomeAssistant) -> 
     assert sensor.native_value == 1234
 
     sensor.coordinator.data[0]["status"]["odometerKm"] = None
+
+    assert sensor.available is False
+
+
+async def test_position_timestamp_sensor(hass: HomeAssistant) -> None:
+    """The position timestamp sensor reports the parsed AcquisitionDatetime."""
+    acquired = datetime.datetime(2026, 8, 23, 11, 55, tzinfo=datetime.UTC)
+    sensor = _sensor(hass, "position_timestamp", {"positionTimestamp": acquired})
+    assert sensor.available is True
+    assert sensor.native_value == acquired
+
+    sensor.coordinator.data[0]["status"]["positionTimestamp"] = None
 
     assert sensor.available is False
 

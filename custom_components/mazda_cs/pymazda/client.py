@@ -274,8 +274,8 @@ class Client:  # noqa: D101
             ),
             "latitude": latitude,
             "longitude": longitude,
-            "positionTimestamp": remote_info.get("PositionInfo", {}).get(
-                "AcquisitionDatetime"
+            "positionTimestamp": _parse_occurrence_date(
+                remote_info.get("PositionInfo", {}).get("AcquisitionDatetime")
             ),
             "fuelRemainingPercent": remote_info.get("ResidualFuel", {}).get(
                 "FuelSegementDActl"

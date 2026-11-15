@@ -5,6 +5,7 @@
 | Platform | Entity (key) | Entity name | Feature gating |
 |---|---|---|---|
 | **sensor** | `vehicle_status_timestamp` | Vehicle status last updated | Last time the vehicle sent an update to the server |
+| **sensor** | `position_timestamp` | Position last updated | When the vehicle last acquired its GPS position |
 | **sensor** | `odometer` | Odometer |  |
 | **sensor** | `front_left_tire_pressure` | Front left tire pressure |  |
 | **sensor** | `front_right_tire_pressure` | Front right tire pressure |  |
@@ -60,6 +61,7 @@
 | **binary_sensor** | `fuel_lid` | Fuel lid |  |
 | **binary_sensor** | `oil_level_warning` | Oil level warning |  |
 | **binary_sensor** | `oil_deteriorate_warning` | Oil deterioration warning |  |
+| **binary_sensor** | `health_oil_overfill` | Oil overfill warning | From the daily health report |
 
 
 ## Diesel Only (hasSCR)

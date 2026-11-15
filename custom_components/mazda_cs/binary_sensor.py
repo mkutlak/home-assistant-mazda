@@ -264,6 +264,15 @@ HEALTH_BINARY_SENSOR_ENTITIES: list[MazdaBinarySensorEntityDescription] = [
             "trunk_light_bulb":    h["warnings"]["backLamp"],
         } if h else {},
     ),
+    MazdaBinarySensorEntityDescription(
+        key="health_oil_overfill",
+        translation_key="health_oil_overfill",
+        icon="mdi:oil-level",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        is_supported=lambda data: data["hasFuel"],
+        value_fn=lambda h: h["warnings"]["oilAmountExceed"] if h else None,
+    ),
 ]
 
 
@@ -285,8 +294,9 @@ async def async_setup_entry(
     ]
     entities += [
         MazdaHealthBinarySensorEntity(client, coordinator, health_coordinator, index, description)
-        for index in range(len(coordinator.data))
+        for index, data in enumerate(coordinator.data)
         for description in HEALTH_BINARY_SENSOR_ENTITIES
+        if description.is_supported(data)
     ]
     async_add_entities(entities)
 

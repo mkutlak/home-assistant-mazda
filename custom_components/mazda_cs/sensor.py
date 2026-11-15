@@ -168,6 +168,15 @@ SENSOR_ENTITIES = [
         value=lambda data: data["status"]["lastUpdatedTimestamp"],
     ),
     MazdaSensorEntityDescription(
+        key="position_timestamp",
+        translation_key="position_timestamp",
+        icon="mdi:map-clock",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        is_supported=lambda data: data["status"]["positionTimestamp"] is not None,
+        value=lambda data: data["status"]["positionTimestamp"],
+    ),
+    MazdaSensorEntityDescription(
         key="fuel_remaining_percentage",
         translation_key="fuel_remaining_percentage",
         icon="mdi:gas-station",

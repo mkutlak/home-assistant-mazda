@@ -115,6 +115,9 @@
             },
             "health_lights_problem": {
                 "name": "Leuchtmittelfehler-Warnung"
+            },
+            "health_oil_overfill": {
+                "name": "Ölüberfüllungs-Warnung"
             }
         },
         "button": {
@@ -189,6 +192,9 @@
             },
             "vehicle_status_timestamp": {
                 "name": "Fahrzeugstatus zuletzt aktualisiert"
+            },
+            "position_timestamp": {
+                "name": "Position zuletzt aktualisiert"
             },
             "fuel_remaining_percentage": {
                 "name": "Tankfüllstand in %"
