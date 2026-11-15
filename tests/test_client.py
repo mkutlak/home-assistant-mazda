@@ -27,6 +27,7 @@ from custom_components.mazda_cs.pymazda.connection import (
 from custom_components.mazda_cs.pymazda.exceptions import (
     MazdaException,
     MazdaRateLimitException,
+    MazdaSessionExpiredException,
 )
 
 VEHICLE_ID = 12345
@@ -329,3 +330,30 @@ async def test_access_token_provider_runs_before_every_request() -> None:
     await conn.api_request("POST", "x", needs_keys=False, needs_auth=True)
 
     assert sent_tokens == ["token-1", "token-2"]
+
+
+async def test_persistent_600100_sends_at_most_twice() -> None:
+    """A re-attach that did not help is not repeated: one retry, then give up."""
+    conn, _ = _connection(MagicMock(status=200))
+    conn.session_refresh_provider = AsyncMock()
+    send = AsyncMock(side_effect=MazdaSessionExpiredException("conflict"))
+    conn._Connection__send_api_request = send
+
+    with pytest.raises(MazdaException):
+        await conn.api_request("POST", "x", needs_keys=False)
+
+    assert send.await_count == 2
+
+
+async def test_600100_on_attach_raises_without_reattaching() -> None:
+    """A 600100 answering attach itself must not call attach again."""
+    conn, _ = _connection(MagicMock(status=200))
+    conn.session_refresh_provider = AsyncMock()
+    send = AsyncMock(side_effect=MazdaSessionExpiredException("conflict"))
+    conn._Connection__send_api_request = send
+
+    with pytest.raises(MazdaSessionExpiredException):
+        await conn.api_request("POST", "remoteServices/attach/v4", needs_keys=False)
+
+    assert send.await_count == 1
+    conn.session_refresh_provider.assert_not_awaited()

@@ -150,7 +150,7 @@ USER_AGENT_BASE_API = "MyMazda/10.0.2 (Linux; Android 16)"
 APP_OS = "ANDROID"
 APP_VERSION = "10.0.2"
 
-MAX_RETRIES = 4
+MAX_RETRIES = 1
 
 _LOG_REDACT_KEYS = {
     "vin",
@@ -405,8 +405,8 @@ class Connection:
             )
         except MazdaSessionExpiredException as ex:
             # Legacy (Kintaro) connections never attach, so re-attaching and
-            # retrying cannot help - surface the conflict instead.
-            if self.session_refresh_provider is None:
+            # retrying cannot help; nor can it when attach itself is rejected.
+            if self.session_refresh_provider is None or "attach" in uri:
                 raise
             self.logger.warning(
                 "Server reports session conflict (600100). Clearing session ID and re-attaching. Details: %s",
