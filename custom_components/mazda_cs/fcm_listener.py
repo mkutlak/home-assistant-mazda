@@ -10,13 +10,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import CONF_FCM_CREDENTIALS
+from .const import CONF_FCM_CREDENTIALS, POLL_INTERVAL_NO_PUSH, POLL_INTERVAL_PUSH
 from .locales import resolve_locale
 
 
 def _poll_interval(push_connected: bool) -> timedelta:
-    """While push is up, status pushes trigger refreshes, so polling is a safety net."""
-    return timedelta(hours=1) if push_connected else timedelta(minutes=3)
+    return POLL_INTERVAL_PUSH if push_connected else POLL_INTERVAL_NO_PUSH
 
 try:
     from .pymazda.push import MazdaPushClient
@@ -33,7 +32,7 @@ _LOGGER = logging.getLogger(__name__)
 EVENT_MAZDA_PUSH = "mazda_cs_push"
 
 # Action codes that warrant an immediate coordinator refresh so HA state
-# reflects the vehicle change without waiting for the 3-minute poll interval.
+# reflects the vehicle change without waiting for the timed poll.
 _REFRESH_CODES = frozenset(
     [
         "001",  # INBOX_REMOTE — remote command result (lock/unlock/engine/A/C/lights)
@@ -267,12 +266,12 @@ class MazdaFcmListener:
         )
 
     def enable_push_based_interval(self) -> None:
-        """Allow MCS connection state to flip the coordinator interval 3 min↔1 h.
+        """Allow MCS connection state to flip the coordinator interval 30 min↔1 h.
 
         Called from ``async_setup_entry`` once the account is confirmed to have
         remote/status permissions and FCM registration succeeded.  If MCS is
         already connected when this is called, the interval is promoted to 1 h
-        immediately; otherwise it stays at 3 min until MCS comes up.
+        immediately; otherwise it stays at 30 min until MCS comes up.
         """
         self._push_based_interval = True
         self._coordinator.update_interval = _poll_interval(self._mcs_connected)

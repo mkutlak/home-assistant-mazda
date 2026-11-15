@@ -139,7 +139,7 @@ The previous mazda_cs_remote_service_result events are removed and have been sup
 
 ## How often does the integration check for updates
 
-**Vehicle Status:** When triggered by a push notification, plus a timed check every hour while push notifications are connected. If push notifications are unavailable or disconnected, every 3 minutes.
+**Vehicle Status:** When triggered by a push notification, plus a timed check every hour while push notifications are connected. If push notifications are unavailable or disconnected, every 30 minutes.
 **Health Report Status:** Every 24 hours or when triggered by a push notification
 **Vehicle Images:** When the integration loads, if enabled. A failed fetch is retried hourly, up to 6 times.
 
@@ -157,7 +157,7 @@ The vehicle sends an update to Mazda when:
 
 ### Vehicle Status **does not update**
 * When the engine is on
-* **During a timed integration data refresh (1 h with push, 3 min without)**.
+* **During a timed integration data refresh (1 h with push, 30 min without)**.
     * These refreshes only pull the last information sent by the vehicle to Mazda when last turned off or a status alert was sent.
 * When in power save mode
 
