@@ -13,6 +13,11 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import CONF_FCM_CREDENTIALS
 from .locales import resolve_locale
 
+
+def _poll_interval(push_connected: bool) -> timedelta:
+    """While push is up, status pushes trigger refreshes, so polling is a safety net."""
+    return timedelta(hours=1) if push_connected else timedelta(minutes=3)
+
 try:
     from .pymazda.push import MazdaPushClient
 
@@ -254,25 +259,23 @@ class MazdaFcmListener:
         self._mcs_connected = connected
         if not self._push_based_interval:
             return
-        self._coordinator.update_interval = timedelta(minutes=6 if connected else 3)
+        self._coordinator.update_interval = _poll_interval(connected)
         _LOGGER.debug(
-            "MCS %s — coordinator interval set to %d min",
+            "MCS %s — coordinator interval set to %s",
             "connected" if connected else "disconnected",
-            6 if connected else 3,
+            self._coordinator.update_interval,
         )
 
     def enable_push_based_interval(self) -> None:
-        """Allow MCS connection state to flip the coordinator interval 3↔6 min.
+        """Allow MCS connection state to flip the coordinator interval 3 min↔1 h.
 
         Called from ``async_setup_entry`` once the account is confirmed to have
         remote/status permissions and FCM registration succeeded.  If MCS is
-        already connected when this is called, the interval is promoted to 6
-        min immediately; otherwise it stays at 3 until MCS comes up.
+        already connected when this is called, the interval is promoted to 1 h
+        immediately; otherwise it stays at 3 min until MCS comes up.
         """
         self._push_based_interval = True
-        self._coordinator.update_interval = timedelta(
-            minutes=6 if self._mcs_connected else 3
-        )
+        self._coordinator.update_interval = _poll_interval(self._mcs_connected)
 
     def _on_notification(self, payload: dict[str, Any]) -> None:
         """Handle an incoming FCM push notification.
