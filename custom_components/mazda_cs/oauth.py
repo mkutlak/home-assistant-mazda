@@ -157,6 +157,11 @@ class MazdaOAuth2Implementation(LocalOAuth2ImplementationWithPkce):
                 new_token.get("error"),
                 new_token.get("error_description", ""),
             )
+            # RFC 6749 §4.1.2.1: these codes mean "try again later", not a bad grant.
+            if new_token["error"] in ("server_error", "temporarily_unavailable"):
+                raise Exception(
+                    f"B2C token refresh failed transiently ({new_token['error']}) — will retry"
+                )
             raise ConfigEntryAuthFailed(
                 f"Token refresh failed: {new_token.get('error_description', new_token['error'])}"
             )
