@@ -92,3 +92,20 @@ async def test_connect_counts_as_activity(monkeypatch: pytest.MonkeyPatch) -> No
 
     assert await client._connect()
     assert time.monotonic() - client._last_message_time < 5
+
+
+@pytest.mark.parametrize(
+    "length_prefix",
+    [b"\x80\x80\x80\x01", b"\x80\x80\x80\x80\x80\x01"],
+    ids=["2MiB", "6-byte-varint"],
+)
+async def test_recv_rejects_oversized_length(length_prefix: bytes) -> None:
+    """A huge or overlong length prefix is rejected before any read of the body."""
+    client = _client()
+    client._first_message = False
+    client._reader = asyncio.StreamReader()
+    client._reader.feed_data(bytes([3]) + length_prefix)
+    client._reader.feed_eof()
+
+    with pytest.raises(RuntimeError, match="MCS"):
+        await client._recv()

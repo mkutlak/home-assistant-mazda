@@ -35,6 +35,8 @@ _LOGGER = logging.getLogger(__name__)
 MCS_HOST = "mtalk.google.com"
 MCS_PORT = 5228
 MCS_VERSION = 41
+# Real MCS stanzas are a few KB; a larger length prefix means a corrupt or hostile stream.
+_MAX_MESSAGE_SIZE = 1 << 20
 MCS_SELECTIVE_ACK_ID = 12
 RECONNECT_DELAY_MIN = 3
 RECONNECT_DELAY_MAX = 300
@@ -162,6 +164,8 @@ class McsClient:
             if not (b & 0x80):
                 break
             shift += 7
+            if shift >= 35:  # 5 bytes is the most a 32-bit length needs
+                raise RuntimeError("MCS: length varint too long")
         return res
 
     async def _send(self, msg: Any) -> None:
@@ -183,6 +187,8 @@ class McsClient:
             (tag,) = struct.unpack("B", await self._reader.readexactly(1))  # type: ignore[union-attr]
 
         size = await self._read_varint()
+        if size > _MAX_MESSAGE_SIZE:
+            raise RuntimeError(f"MCS: message size {size} exceeds limit")
         buf = await self._reader.readexactly(size)
 
         msg_class = _TYPE_BY_TAG.get(tag)
