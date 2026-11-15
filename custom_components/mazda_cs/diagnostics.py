@@ -15,6 +15,7 @@ TO_REDACT_INFO = [
     "access_token",
     "id_token",
     "refresh_token",
+    "client_info",  # B2C client_info holds the user object id
     # fcm_credentials contains android_id + security_token — together a full
     # MCS login credential that would let anyone receive this user's pushes.
     "fcm_credentials",
