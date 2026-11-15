@@ -403,3 +403,25 @@ async def test_reattach_inside_retry_does_not_deadlock() -> None:
         await conn.api_request("POST", "x", needs_keys=False)
 
     assert calls == ["x", "attach", "x"]
+
+
+async def test_429_blocks_requests_until_cooldown_passes() -> None:
+    """After a 429 no request is sent for 15 minutes."""
+    conn, session = _connection(MagicMock(status=429))
+
+    with patch("custom_components.mazda_cs.pymazda.connection.time") as clock:
+        clock.time.return_value = 1.0
+        clock.monotonic.return_value = 1000.0
+        with pytest.raises(MazdaRateLimitException):
+            await conn.api_request("POST", "service/checkVersion", needs_keys=False)
+        assert session.request.await_count == 1
+
+        clock.monotonic.return_value = 1000.0 + 899
+        with pytest.raises(MazdaRateLimitException):
+            await conn.api_request("POST", "service/checkVersion", needs_keys=False)
+        assert session.request.await_count == 1
+
+        clock.monotonic.return_value = 1000.0 + 901
+        with pytest.raises(MazdaRateLimitException):
+            await conn.api_request("POST", "service/checkVersion", needs_keys=False)
+        assert session.request.await_count == 2
