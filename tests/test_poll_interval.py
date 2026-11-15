@@ -21,12 +21,12 @@ async def test_push_connected_polls_hourly(hass: HomeAssistant) -> None:
     assert listener._coordinator.update_interval == timedelta(hours=1)
 
 
-async def test_push_down_polls_every_3_min(hass: HomeAssistant) -> None:
+async def test_push_down_polls_every_30_min(hass: HomeAssistant) -> None:
     """Without pushes, polling is the only source of updates."""
     listener = _listener(hass)
     listener._on_mcs_state(True)
     listener._on_mcs_state(False)
-    assert listener._coordinator.update_interval == timedelta(minutes=3)
+    assert listener._coordinator.update_interval == timedelta(minutes=30)
 
 
 async def test_already_connected_when_enabled_polls_hourly(hass: HomeAssistant) -> None:

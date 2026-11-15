@@ -1,6 +1,13 @@
 """Constants for the Mazda Connected Services integration."""
 
+from datetime import timedelta
+
 DOMAIN = "mazda_cs"
+
+# Vehicle status poll interval. With push connected, status pushes trigger
+# refreshes and the timed poll is only a safety net.
+POLL_INTERVAL_PUSH = timedelta(hours=1)
+POLL_INTERVAL_NO_PUSH = timedelta(minutes=30)
 
 # Persisted config entry key for FCM credentials (android_id, security_token, etc.)
 CONF_FCM_CREDENTIALS = "fcm_credentials"
