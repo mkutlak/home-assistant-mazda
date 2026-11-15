@@ -39,9 +39,7 @@ function isHomeAssistantFlow(state) {
       base64 += '='.repeat(4 - remainder);
     }
     
-    console.log('Decoding JWT payload:', base64);
     const payload = JSON.parse(atob(base64));
-    console.log('Decoded payload:', payload);
     
     const isHA = payload && typeof payload.flow_id === "string" && payload.flow_id.length > 0;
     console.log('Is Home Assistant flow?', isHA);
@@ -60,7 +58,7 @@ function handleMazdaRedirect(url, tabId, source = 'unknown') {
   // Prevent duplicate processing
   const urlKey = `${tabId}-${url}`;
   if (processedUrls.has(urlKey)) {
-    console.log(`[${source}] Already processed:`, url);
+    console.log(`[${source}] Already processed`);
     return;
   }
   processedUrls.add(urlKey);
@@ -68,7 +66,7 @@ function handleMazdaRedirect(url, tabId, source = 'unknown') {
   // Clean up old entries after 5 seconds
   setTimeout(() => processedUrls.delete(urlKey), 5000);
 
-  console.log(`[${source}] Handling Mazda redirect:`, url);
+  console.log(`[${source}] Handling Mazda redirect`);
 
   try {
     // Parse the URL to extract the authorization code

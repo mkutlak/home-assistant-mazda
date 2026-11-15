@@ -35,9 +35,7 @@ function isHomeAssistantFlow(state) {
       base64 += '='.repeat(4 - remainder);
     }
 
-    console.log('Decoding JWT payload:', base64);
     const payload = JSON.parse(atob(base64));
-    console.log('Decoded payload:', payload);
 
     const isHA = payload && typeof payload.flow_id === "string" && payload.flow_id.length > 0;
     console.log('Is Home Assistant flow?', isHA);
@@ -54,13 +52,13 @@ const processedUrls = new Set();
 function handleMazdaRedirect(url, tabId, source = 'unknown') {
   const urlKey = `${tabId}-${url}`;
   if (processedUrls.has(urlKey)) {
-    console.log(`[${source}] Already processed:`, url);
+    console.log(`[${source}] Already processed`);
     return;
   }
   processedUrls.add(urlKey);
   setTimeout(() => processedUrls.delete(urlKey), 5000);
 
-  console.log(`[${source}] Handling Mazda redirect:`, url);
+  console.log(`[${source}] Handling Mazda redirect`);
 
   try {
     const urlObj = new URL(url);
