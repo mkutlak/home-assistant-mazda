@@ -8,6 +8,7 @@ client-layer parsing of the image list, plus the image/select entity pair.
 from unittest.mock import AsyncMock, MagicMock
 
 from homeassistant.core import HomeAssistant, State
+import httpx
 import pytest
 from pytest_homeassistant_custom_component.common import mock_restore_cache
 
@@ -43,8 +44,8 @@ VEHICLE = {
     "carlineName": "MAZDA3 HB",
 }
 IMAGES = [
-    {"name": "MAZDA3 HB=01.jpg", "url": "https://img.test/01.jpg"},
-    {"name": "MAZDA3 HB=02.jpg", "url": "https://img.test/02.jpg"},
+    {"name": "MAZDA3 HB=01.jpg", "url": "https://img.s3.amazonaws.com/01.jpg"},
+    {"name": "MAZDA3 HB=02.jpg", "url": "https://img.s3.amazonaws.com/02.jpg"},
 ]
 JPEG_BYTES = b"\xff\xd8\xff\xe0" + b"\x00" * 16
 
@@ -236,7 +237,7 @@ async def test_entities_default_to_first_image(hass: HomeAssistant) -> None:
 
     assert select.options == ["Mazda3 HB 01", "Mazda3 HB 02"]
     assert select.current_option == "Mazda3 HB 01"
-    assert image.image_url == "https://img.test/01.jpg"
+    assert image.image_url == "https://img.s3.amazonaws.com/01.jpg"
     assert image.available
     assert image.extra_state_attributes["selected"] == "Mazda3 HB 01"
 
@@ -252,7 +253,7 @@ async def test_restored_option_applied_when_data_arrives(hass: HomeAssistant) ->
     image_coordinator.push([IMAGES])
 
     assert select.current_option == "Mazda3 HB 02"
-    assert image.image_url == "https://img.test/02.jpg"
+    assert image.image_url == "https://img.s3.amazonaws.com/02.jpg"
 
 
 async def test_restored_option_no_longer_offered_falls_back(
@@ -263,7 +264,7 @@ async def test_restored_option_no_longer_offered_falls_back(
     image, select, _ = await _add_entities(hass, [IMAGES])
 
     assert select.current_option == "Mazda3 HB 01"
-    assert image.image_url == "https://img.test/01.jpg"
+    assert image.image_url == "https://img.s3.amazonaws.com/01.jpg"
 
 
 async def test_image_cache_reset_only_when_url_changes(hass: HomeAssistant) -> None:
@@ -277,7 +278,7 @@ async def test_image_cache_reset_only_when_url_changes(hass: HomeAssistant) -> N
     assert image.image_last_updated == first_updated
 
     await select.async_select_option("Mazda3 HB 02")
-    assert image.image_url == "https://img.test/02.jpg"
+    assert image.image_url == "https://img.s3.amazonaws.com/02.jpg"
     assert image._cached_image is None
     assert image.image_last_updated is not None
 
@@ -303,6 +304,40 @@ async def test_image_with_unknown_bytes_is_rejected(hass: HomeAssistant) -> None
     image._fetch_url = AsyncMock(return_value=response)
 
     assert await image.async_image() is None
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://img.s3.amazonaws.com/01.jpg",
+        "https://169.254.169.254/latest/meta-data/",
+        "https://amazonaws.com.evil.example/01.jpg",
+        "https://img.s3.amazonaws.com@evil.example/01.jpg",
+    ],
+)
+async def test_image_url_outside_mazda_hosts_is_not_fetched(
+    hass: HomeAssistant, url: str
+) -> None:
+    """The API-supplied URL must be https on Mazda's hosts, or HA never fetches it."""
+    image, _, _ = await _add_entities(hass, [[{"name": "X=01.jpg", "url": url}]])
+    image._client = MagicMock(get=AsyncMock())
+
+    assert await image.async_image() is None
+    image._client.get.assert_not_called()
+
+
+async def test_image_fetch_does_not_follow_redirects(hass: HomeAssistant) -> None:
+    """An allowed host cannot bounce the fetch to another host."""
+    image, _, _ = await _add_entities(hass, [IMAGES])
+    redirect = httpx.Response(
+        302,
+        headers={"location": "http://169.254.169.254/"},
+        request=httpx.Request("GET", IMAGES[0]["url"]),
+    )
+    image._client = MagicMock(get=AsyncMock(return_value=redirect))
+
+    assert await image.async_image() is None
+    assert not image._client.get.call_args.kwargs.get("follow_redirects")
 
 
 def _config_entry(options: dict) -> MagicMock:
