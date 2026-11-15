@@ -617,21 +617,6 @@ class Client:  # noqa: D101
             return json.loads(base64.b64decode(encoded))
         return {}
 
-    # Currently unused: remote-command results arrive via FCM push (see
-    # fcm_listener.py), which replaced the inbox-polling path. Kept as the
-    # client-layer entry point to getInboxList for possible future use.
-    async def get_inbox_list(
-        self,
-        internal_vin_list,
-        actiontype="001,021,031,033",
-        status=0,
-        limit=100,
-        offset=0,
-    ):  # noqa: D102
-        return await self.controller.get_inbox_list(
-            internal_vin_list, actiontype, status, limit, offset
-        )
-
     async def get_home_bg_images(self, model_code4):  # noqa: D102
         # The app falls back to "0000" when modelCode4 is missing or malformed
         if not model_code4 or len(model_code4) != 4:
@@ -648,9 +633,6 @@ class Client:  # noqa: D101
 
     def get_home_bg_image(self, vehicle_id: int) -> str | None:  # noqa: D102
         return self._home_bg_image_selection.get(vehicle_id)
-
-    async def update_vehicle_nickname(self, vin, new_nickname):  # noqa: D102
-        await self.controller.update_nickname(vin, new_nickname)
 
     async def close(self):  # noqa: D102
         await self.controller.close()

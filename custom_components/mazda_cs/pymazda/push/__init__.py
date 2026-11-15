@@ -70,14 +70,6 @@ class MazdaPushClient:
         self._mcs: McsClient | None = None
         self._local_session: ClientSession | None = None
 
-    @property
-    def credentials(self) -> dict[str, Any] | None:
-        """Current credentials dict — persist this across restarts."""
-        return self._credentials
-
-    def is_started(self) -> bool:
-        return self._mcs is not None and self._mcs.is_started()
-
     async def checkin_or_register(self) -> str | None:
         """Check in (or register fresh) with GCM.
 
