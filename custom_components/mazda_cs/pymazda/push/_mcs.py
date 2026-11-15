@@ -125,9 +125,6 @@ class McsClient:
         """Stop the MCS listener and close the connection."""
         self._do_listen = False
         # Cancel tasks before closing the writer so readers unblock immediately.
-        # Awaiting _close_writer() first could block for 30-60 s if the SSL/TCP
-        # teardown stalls (no response to FIN from mtalk.google.com), which would
-        # delay task cancellation for the full OS TCP timeout.
         for task in self._tasks:
             task.cancel()
         for task in self._tasks:

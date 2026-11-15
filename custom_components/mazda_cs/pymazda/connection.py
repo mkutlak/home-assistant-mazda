@@ -538,7 +538,7 @@ class Connection:
             response.release()
             self._rate_limited_until = time.monotonic() + RATE_LIMIT_COOLDOWN
             raise MazdaRateLimitException(
-                "Rate limited by Mazda API (429) — will retry on next cycle"
+                "Rate limited by Mazda API (429) — pausing requests for 15 min"
             )
 
         response_json = await response.json()
@@ -615,7 +615,7 @@ class Connection:
         self.sign_key = response["signKey"]
 
     async def __api_request_to_url(self, method, full_url, body_dict={}):
-        """Send a request to an explicit URL (used for checkVersion on old API)."""
+        """Send a request to an explicit URL (used for checkVersion)."""
         timestamp = self.__get_timestamp_str_ms()
         headers = {
             "device-id": self.base_api_device_id,

@@ -516,7 +516,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: MazdaConfigEntry) -> boo
     )
     # A failed setup (SETUP_RETRY) skips async_unload_entry but runs on_unload
     # callbacks; stopping here keeps retries from leaking live listeners.
-    # unregister=False: deleting the FID would leave a stale fid in entry.data.
     entry.async_on_unload(fcm_listener.async_stop)
 
     # Set runtime_data before starting FCM so any push arriving during setup
@@ -704,7 +703,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Called only when the config entry is permanently deleted by the user.
 
     async_unload_entry runs first (MCS connection closed, session detached).
-    hass.data for this entry has already been cleaned up by that point, so
+    entry.runtime_data has already been cleaned up by that point, so
     we read cleanup state directly from entry.data.
 
     Deletes the Firebase Installation so that Mazda's backend receives
