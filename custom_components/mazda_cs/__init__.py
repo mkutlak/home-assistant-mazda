@@ -549,31 +549,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: MazdaConfigEntry) -> boo
                 "getAvailableService(%s) failed: %s", vehicle["id"], ex
             )
             continue
+        # WARNING logs end up in pasted bug reports: show only the VIN's last 4.
+        vin_tail = "…" + str(vehicle.get("vin") or "")[-4:]
+        _LOGGER.debug("Available services for vehicle %s: %s", vin_tail, available)
         if available.get("vehicleStatusAlert") != 1:
             status_alert_available = False
             _LOGGER.warning(
                 "Mazda account lacks vehicle status-alert permission "
                 "for vehicle %s — push notifications and remote commands may "
-                "not work as expected. Available services: %s",
-                vehicle["vin"],
-                available,
+                "not work as expected.",
+                vin_tail,
             )
         if available.get("healthReports") != 1:
             health_report_available = False
             _LOGGER.warning(
                 "Mazda account lacks Health Report permission "
-                "for vehicle %s — some entities may not work as expected. "
-                "Available services: %s",
-                vehicle["vin"],
-                available,
+                "for vehicle %s — some entities may not work as expected.",
+                vin_tail,
             )
         if available.get("remoteControl") != 1:
             _LOGGER.warning(
                 "Mazda account lacks remote control permission "
                 "for vehicle %s — remote commands may not work "
-                "as expected. Available services: %s",
-                vehicle["vin"],
-                available,
+                "as expected.",
+                vin_tail,
             )
 
     if status_alert_available and coordinator.push_enabled:

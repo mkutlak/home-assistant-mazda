@@ -140,6 +140,11 @@ _LOG_REDACT_KEYS = {
     "Longitude",
     "Latitude",
     "visitNo",
+    "sessionId",
+    "contactMailAddress",
+    "custId",
+    "usherId",
+    "internalUserId",
 }
 
 
@@ -607,18 +612,21 @@ class Connection:
             method, full_url, headers=headers, data="", ssl=ssl_context
         )
         response_json = await response.json()
-        self.logger.debug("checkVersion response: %s", response_json)
+        # The payload decrypts to the API keys; log only the outcome.
+        error_code = response_json.get("errorCode")
+        self.logger.debug(
+            "checkVersion state=%s errorCode=%s", response_json.get("state"), error_code
+        )
         if response_json.get("state") == "S":
             return self.__decrypt_payload_using_app_code(
                 response_json["payload"], self.app_code
             )
-        elif response_json.get("errorCode") == 600001:
+        elif error_code == 600001:
             raise MazdaException(
-                "checkVersion rejected (wrong SHA256_CERT_SIG). response: "
-                + str(response_json)
+                "checkVersion rejected (wrong SHA256_CERT_SIG), errorCode 600001"
             )
         else:
-            raise MazdaException("checkVersion failed: " + str(response_json))
+            raise MazdaException(f"checkVersion failed, errorCode {error_code}")
 
     async def close(self):  # noqa: D102
         await self._session.close()
