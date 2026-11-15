@@ -114,6 +114,31 @@ async def test_vehicle_status_with_alert_date_caches_lock_state() -> None:
     assert client.get_assumed_lock_state(VEHICLE_ID) is False
 
 
+@pytest.mark.parametrize(
+    ("acquired", "expected"),
+    [
+        (
+            "20260823115500",
+            datetime.datetime(2026, 8, 23, 11, 55, tzinfo=datetime.UTC),
+        ),
+        ("garbage", None),
+        (None, None),
+    ],
+)
+async def test_vehicle_status_parses_position_timestamp(acquired, expected) -> None:
+    """PositionInfo.AcquisitionDatetime parses to a UTC datetime, or None if unusable."""
+    client = _make_client()
+    position = {**REMOTE_INFO["PositionInfo"], "AcquisitionDatetime": acquired}
+    client.controller.get_vehicle_status.return_value = {
+        "remoteInfos": [{**REMOTE_INFO, "PositionInfo": position}],
+        "alertInfos": [ALERT_INFO],
+    }
+
+    status = await client.get_vehicle_status(VEHICLE_ID)
+
+    assert status["positionTimestamp"] == expected
+
+
 async def test_undated_alert_does_not_clobber_assumed_lock_state() -> None:
     """A dateless poll must not override a just-issued lock command.
 

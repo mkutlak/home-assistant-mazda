@@ -168,6 +168,9 @@
       },
       "health_lights_problem": {
         "name": "Light problem warning"
+      },
+      "health_oil_overfill": {
+        "name": "Oil overfill warning"
       }
     },
     "button": {
@@ -226,6 +229,9 @@
     "sensor": {
       "vehicle_status_timestamp": {
         "name": "Vehicle status last updated"
+      },
+      "position_timestamp": {
+        "name": "Position last updated"
       },
       "fuel_remaining_percentage": {
         "name": "Fuel remaining percentage"
