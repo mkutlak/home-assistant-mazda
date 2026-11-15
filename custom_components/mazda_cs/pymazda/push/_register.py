@@ -470,60 +470,6 @@ async def fis_delete_installation(
         return False
 
 
-async def gcm_unregister(
-    session: ClientSession,
-    android_id: str,
-    security_token: str,
-    fcm_token: str | None = None,
-) -> bool:
-    """Unregister the FCM token so Firebase stops routing to this device.
-
-    Equivalent to ``FirebaseMessaging.getInstance().deleteToken()`` on Android.
-    Called on integration unload so the old token becomes invalid — subsequent
-    Mazda push attempts to the old token will receive INVALID_REGISTRATION from
-    Firebase, causing Mazda's backend to remove the stale Conductor entry.
-
-    ``fcm_token`` must be the registration token returned by ``gcm_register()``
-    (stored in credentials["token"]).  Without it, Firebase has no specific
-    registration to delete and echoes back the sender ID as ``token=<sender_id>``
-    instead of ``deleted=<token>``.
-
-    Returns True if unregistration was confirmed, False otherwise (best-effort).
-    """
-    headers = {
-        "Authorization": f"AidLogin {android_id}:{security_token}",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-Android-Package": FCM_ANDROID_PACKAGE,
-        "X-Android-Cert": FCM_ANDROID_CERT_SHA1,
-    }
-    body = {
-        "app": MAZDA_APP_PACKAGE,
-        "X-subtype": MAZDA_SENDER_ID,
-        "device": android_id,
-        "sender": MAZDA_SENDER_ID,
-        "cert": FCM_ANDROID_CERT_SHA1,
-        "delete": "true",
-    }
-    if fcm_token:
-        body["token"] = fcm_token
-    try:
-        async with session.post(
-            GCM_REGISTER_URL,
-            headers=headers,
-            data=body,
-            timeout=_TIMEOUT,
-        ) as resp:
-            text = await resp.text()
-        if resp.status == 200 and "deleted" in text.lower():
-            _LOGGER.debug("GCM unregistration succeeded")
-            return True
-        _LOGGER.debug("GCM unregistration response (non-fatal): HTTP %d — %s", resp.status, text)
-        return False
-    except Exception as ex:  # noqa: BLE001
-        _LOGGER.debug("GCM unregistration error (non-fatal): %s", ex)
-        return False
-
-
 async def checkin_and_register(
     session: ClientSession,
     existing: dict | None = None,
@@ -537,8 +483,8 @@ async def checkin_and_register(
     Plain GCM register3 tokens (no gmp_app_id) are legacy sender-scoped tokens
     that may not be routable via FCM v1 — kept as fallback only.
 
-    Returns ``{"android_id": str, "security_token": str, "token": str}`` on
-    success, or None on failure.
+    Returns ``{"android_id", "security_token", "token"}`` (plus ``"fid"`` and
+    ``"refresh_token"`` on the FIS path) on success, or None on failure.
     """
     # Check in once and share the resulting device identity with both paths.
     # A separate check-in per path would burn a second android_id, which Google
