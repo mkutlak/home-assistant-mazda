@@ -70,16 +70,6 @@ class Controller:  # noqa: D101
             needs_auth=True,
         )
 
-    async def get_language_pkg(self):  # noqa: D102
-        postBody = {"platformType": "ANDROID", "region": self.region, "version": "2.0.4"}
-        return await self.legacy_connection.api_request(
-            "POST",
-            "junction/getLanguagePkg/v4",
-            body_dict=postBody,
-            needs_keys=True,
-            needs_auth=False,
-        )
-
     async def get_home_bg_images(self, model_code):  # noqa: D102
         post_body = {
             "modelCode": model_code,
@@ -345,29 +335,6 @@ class Controller:  # noqa: D101
 
         return response["carlineDesc"]
 
-    async def update_nickname(self, vin, new_nickname):  # noqa: D102
-        if len(vin) != 17:
-            raise MazdaException("Invalid VIN")
-        if len(new_nickname) > 20:
-            raise MazdaException("Nickname is too long")
-
-        post_body = {
-            "internaluserid": "__INTERNAL_ID__",
-            "vin": vin,
-            "vtitle": new_nickname,
-        }
-
-        response = await self.connection.api_request(
-            "POST",
-            "remoteServices/updateNickName/v4",
-            body_dict=post_body,
-            needs_keys=True,
-            needs_auth=True,
-        )
-
-        if response["resultCode"] not in _SUCCESS_CODES:
-            raise MazdaException("Failed to update vehicle nickname")
-
     async def send_poi(self, internal_vin, latitude, longitude, name):  # noqa: D102
         # Calculate a POI ID that is unique to the name and location
         poi_id = hashlib.sha256(
@@ -601,33 +568,6 @@ class Controller:  # noqa: D101
             needs_keys=True,
             needs_auth=True,
         )
-
-    async def get_inbox_list(
-        self,
-        internal_vin_list,
-        actiontype="001,021,031,033",
-        status=0,
-        limit=100,
-        offset=0,
-    ):  # noqa: D102
-        post_body = {
-            "internaluserid": "__INTERNAL_ID__",
-            "internalvinlist": [{"internalVin": v} for v in internal_vin_list],
-            "actiontype": actiontype,
-            "status": status,
-            "limit": limit,
-            "offset": offset,
-        }
-
-        response = await self.connection.api_request(
-            "POST",
-            "remoteServices/getInboxList/v4",
-            body_dict=post_body,
-            needs_keys=True,
-            needs_auth=True,
-        )
-
-        return response
 
     async def close(self):  # noqa: D102
         await self.connection.close()
