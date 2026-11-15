@@ -52,7 +52,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func handleMazdaURL(_ url: URL) {
-        print("App received URL: \(url.absoluteString)")
+        print("App received URL with scheme \(url.scheme ?? "")")
         
         // Extract the authorization code and other parameters
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
@@ -73,7 +73,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             ]
             
             if let haURL = haComponents?.url {
-                print("Redirecting to Home Assistant: \(haURL.absoluteString)")
+                print("Redirecting to Home Assistant")
                 NSWorkspace.shared.open(haURL)
                 showNotification(title: "Redirecting to Home Assistant", message: "Opening Home Assistant with authorization code")
                 return
@@ -87,7 +87,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func checkIfHomeAssistantFlow(state: String?) -> Bool {
         guard let state = state else { return false }
         
-        print("Checking if Home Assistant flow for state: \(state)")
+        print("Checking if state is a Home Assistant flow")
         
         // Check if state is a JWT with flow_id (for Home Assistant)
         let parts = state.split(separator: ".")
@@ -108,7 +108,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             base64 += String(repeating: "=", count: 4 - remainder)
         }
         
-        print("Attempting to decode JWT payload: \(base64)")
         
         guard let payloadData = Data(base64Encoded: base64),
               let payload = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any] else {
@@ -116,10 +115,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return false
         }
         
-        print("Decoded JWT payload: \(payload)")
         
         if let flowId = payload["flow_id"] as? String, !flowId.isEmpty {
-            print("Found flow_id: \(flowId) - this is a Home Assistant flow!")
+            print("Found flow_id - this is a Home Assistant flow!")
             return true
         }
         

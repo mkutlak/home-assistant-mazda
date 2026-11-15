@@ -15,6 +15,11 @@ const MAZDA_REDIRECT_PREFIXES = [
   "msauth://com.interrait.mymazda",
 ];
 
+// Only wake the listeners for Mazda redirect URIs, not every navigation.
+const MAZDA_URL_FILTER = {
+  url: MAZDA_REDIRECT_PREFIXES.map((urlPrefix) => ({ urlPrefix })),
+};
+
 function isMazdaRedirect(url) {
   return MAZDA_REDIRECT_PREFIXES.some((prefix) => url.startsWith(prefix));
 }
@@ -76,7 +81,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
 
     chrome.tabs.update(details.tabId, { url: captureUrl.toString() });
   }
-});
+}, MAZDA_URL_FILTER);
 
 // Also listen for errors when Chrome can't handle a Mazda OAuth URI
 chrome.webNavigation.onErrorOccurred.addListener(async (details) => {
@@ -107,4 +112,4 @@ chrome.webNavigation.onErrorOccurred.addListener(async (details) => {
 
     chrome.tabs.update(details.tabId, { url: captureUrl.toString() });
   }
-});
+}, MAZDA_URL_FILTER);

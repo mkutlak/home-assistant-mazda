@@ -49,7 +49,7 @@ struct com_mazda_oauth_helper_iosApp: App {
     // MARK: - URL Handling
 
     private func handleMazdaURL(_ url: URL) {
-        print("App received URL: \(url.absoluteString)")
+        print("App received URL with scheme \(url.scheme ?? "")")
 
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         let code = components?.queryItems?.first(where: { $0.name == "code" })?.value
@@ -65,7 +65,7 @@ struct com_mazda_oauth_helper_iosApp: App {
                 URLQueryItem(name: "state", value: state ?? ""),
             ]
             if let haURL = haComponents?.url {
-                print("Redirecting to Home Assistant: \(haURL.absoluteString)")
+                print("Redirecting to Home Assistant")
                 UIApplication.shared.open(haURL)
                 showNotification(
                     title: "Redirecting to Home Assistant",
@@ -120,7 +120,7 @@ struct com_mazda_oauth_helper_iosApp: App {
         else { return false }
 
         if let flowId = payload["flow_id"] as? String, !flowId.isEmpty {
-            print("Found flow_id: \(flowId) — this is a Home Assistant flow")
+            print("Found flow_id — this is a Home Assistant flow")
             return true
         }
         return false

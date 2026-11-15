@@ -4,7 +4,7 @@
   "version": "1.1.0",
   "description": "Captures Mazda mobile OAuth redirects for use with pymazda library",
   "permissions": ["webNavigation", "tabs", "cookies"],
-  "host_permissions": ["*://*.mazda.com/*"],
+  "host_permissions": ["https://*.mazda.com/*"],
   "background": {
     "service_worker": "background.js"
   },
