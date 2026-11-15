@@ -1,0 +1,368 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Účet je již nakonfigurován",
+            "reauth_successful": "Opětovné ověření proběhlo úspěšně",
+            "oauth_error": "Chyba při ověřování OAuth. Zkuste to prosím znovu.",
+            "wrong_account": "Nesprávný účet. Přihlaste se prosím stejným účtem.",
+            "oauth_failed": "Chyba při získávání přístupového tokenu.",
+            "oauth_timeout": "Vypršel časový limit při získávání tokenu OAuth.",
+            "oauth_unauthorized": "Chyba autorizace OAuth při získávání přístupového tokenu."
+        },
+        "error": {
+            "authorize_rejected": "Mazda místo přihlašovacího kódu vrátila chybu, například proto, že bylo přihlášení zrušeno. Otevřete přihlašovací odkaz výše a zkuste to znovu.",
+            "invalid_callback_url": "Vložená URL zpětného volání není platná. Zkopírujte z konzole celou adresu msauth:// včetně kódu.",
+            "state_mismatch": "Adresa patří k jinému pokusu o přihlášení. Použijte nejnovější řádek msauth:// v konzoli, nebo znovu otevřete přihlašovací odkaz výše a vložte novou adresu."
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "region": "Region"
+                },
+                "data_description": {
+                    "region": "Vyberte region, ve kterém je registrován váš účet Mazda Connected Services."
+                },
+                "description": "Vyberte svůj region. Poté budete přesměrováni k přihlášení účtem Mazda."
+            },
+            "reauth_region": {
+                "title": "Způsob ověření se změnil",
+                "description": "Mazda Connected Services nyní používá nový způsob přihlášení. Potvrďte prosím níže svůj region.\n\nPoznámka: Kanada (MCI) a Austrálie (MA) jsou nové možnosti, které dříve neexistovaly.",
+                "data": {
+                    "region": "Region"
+                },
+                "data_description": {
+                    "region": "Vyberte region, ve kterém je registrován váš účet Mazda Connected Services."
+                }
+            },
+            "reauth_confirm": {
+                "title": "Opětovné přihlášení k účtu Mazda",
+                "description": "Vaše relace Mazda vypršela. Přihlaste se prosím znovu."
+            },
+            "reconfigure": {
+                "title": "Nastavení push oznámení",
+                "description": "Změňte, zda se tato integrace registruje k push oznámením Mazda. Opětovné přihlášení není potřeba.",
+                "data": {
+                    "enable_push_notifications": "Povolit push oznámení"
+                },
+                "data_description": {
+                    "enable_push_notifications": "Přijímat push oznámení Mazda v reálném čase (vyžaduje registraci FCM). Vypněte, pokud nepotřebujete potvrzení vzdálených příkazů přes push."
+                }
+            },
+            "pick_method": {
+                "title": "Přihlášení k účtu Mazda",
+                "description": "Vyberte způsob přihlášení.",
+                "menu_options": {
+                    "auth": "Automatické přihlášení (rozšíření prohlížeče)",
+                    "auth_manual": "Ruční přihlášení (kopírování z konzole prohlížeče)"
+                }
+            },
+            "auth": {
+                "title": "Přihlášení pomocí rozšíření prohlížeče",
+                "description": "Otevře se nová karta s přihlašovací stránkou. S nainstalovaným rozšířením OAuth Assist for HA (nebo starším rozšířením Mazda OAuth Helper) se přihlaste a podle pokynů v 'Link to Home Assistant' automaticky dokončete nastavení.\nToto okno nechte otevřené."
+            },
+            "auth_manual": {
+                "title": "Přihlášení k účtu Mazda",
+                "description": "Přihlášení mobilní aplikace končí předáním oficiální aplikaci přes adresu, kterou desktopové prohlížeče neumí otevřít. Postupujte podle pokynů níže a místo toho zkopírujte adresu zpětného volání z vývojářské konzole prohlížeče.\n\n1. [Otevřete přihlášení Mazda]({authorize_url}). Pokud se přihlašovací stránka vůbec nenačte, nejprve v prohlížeči smažte všechny cookies z mazda.com.\n2. Vyplňte přihlašovací formulář Mazda a klikněte na LOGIN. Po kliknutí **se nenačte žádná nová stránka a prohlížeč zdánlivě nic neudělá**. To je v pořádku.\n3. Otevřete vývojářské nástroje prohlížeče (Chrome nebo Edge: F12, na Macu ⌥⌘I) a přejděte na kartu **Konzole**.\n4. Najděte řádek obsahující `Failed to launch 'msauth://com.interrait.mymazda/...'` nebo podobný. Objeví se, protože prohlížeč neumí otevírat adresy `msauth://`.\n5. Klikněte pravým tlačítkem na adresu `msauth://`, zvolte **Kopírovat adresu odkazu** a vložte ji níže.\n\nToto okno nechte otevřené, dokud formulář neodešlete. Adresa je jednorázový přihlašovací údaj, proto ji nevkládejte do hlášení chyb ani na snímky obrazovky.",
+                "data": {
+                    "callback_url": "URL zpětného volání"
+                },
+                "data_description": {
+                    "callback_url": "Celá adresa msauth:// včetně všeho za '?'."
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Možnosti",
+                "description": "Zapněte nebo vypněte volitelné entity. Uložení integraci znovu načte.",
+                "data": {
+                    "enable_vehicle_images": "Obrázky vozidla z MyMazda",
+                    "enable_dev_sensors": "Vývojářské senzory (δ)"
+                },
+                "data_description": {
+                    "enable_vehicle_images": "Přidá entitu Obrázek vozidla a výběr mezi obrázky vozidla, které zobrazuje aplikace MyMazda.",
+                    "enable_dev_sensors": "Přidá experimentální senzory, které čtou surová, nezdokumentovaná pole stavu vozidla. Určeno pro vývoj a řešení problémů. Všechny vývojářské senzory mají předponu 'δ |'."
+                }
+            }
+        }
+    },
+    "entity": {
+        "binary_sensor": {
+            "driver_door": {
+                "name": "Dveře řidiče"
+            },
+            "ev_plugged_in": {
+                "name": "Nabíjecí kabel připojen"
+            },
+            "ev_battery_heater_on": {
+                "name": "Ohřev baterie"
+            },
+            "ev_battery_heater_auto": {
+                "name": "Automatický ohřev baterie"
+            },
+            "hood": {
+                "name": "Kapota"
+            },
+            "passenger_door": {
+                "name": "Dveře spolujezdce"
+            },
+            "rear_left_door": {
+                "name": "Zadní levé dveře"
+            },
+            "rear_right_door": {
+                "name": "Zadní pravé dveře"
+            },
+            "trunk": {
+                "name": "Kufr"
+            },
+            "fuel_lid": {
+                "name": "Dvířka nádrže"
+            },
+            "front_left_tire_pressure_warning": {
+                "name": "Varování tlaku pneumatiky vpředu vlevo"
+            },
+            "front_right_tire_pressure_warning": {
+                "name": "Varování tlaku pneumatiky vpředu vpravo"
+            },
+            "rear_left_tire_pressure_warning": {
+                "name": "Varování tlaku pneumatiky vzadu vlevo"
+            },
+            "rear_right_tire_pressure_warning": {
+                "name": "Varování tlaku pneumatiky vzadu vpravo"
+            },
+            "tpms_battery_warning": {
+                "name": "Baterie snímačů tlaku pneumatik"
+            },
+            "tpms_system_fault": {
+                "name": "Porucha systému TPMS"
+            },
+            "mnt_tyre_at_flg": {
+                "name": "δ | MntTyreAtFlg"
+            },
+            "brake_oil_level_warning": {
+                "name": "Varování hladiny brzdové kapaliny"
+            },
+            "mnt_oil_at_flg": {
+                "name": "δ | MntOilAtFlg"
+            },
+            "oil_level_warning": {
+                "name": "Varování hladiny oleje"
+            },
+            "oil_deteriorate_warning": {
+                "name": "Varování degradace oleje"
+            },
+            "hazard_lights": {
+                "name": "Varování zapnutých výstražných světel"
+            },
+            "scr_maintenance_warning": {
+                "name": "Varování údržby SCR"
+            },
+            "tns_lamp": {
+                "name": "Varování zapnutých vnějších světel"
+            },
+            "pw_sav_mode": {
+                "name": "Úsporný režim"
+            },
+            "health_lights_problem": {
+                "name": "Varování poruchy osvětlení"
+            },
+            "health_oil_overfill": {
+                "name": "Varování přeplnění oleje"
+            }
+        },
+        "button": {
+            "refresh_vehicle_status": {
+                "name": "Obnovit stav"
+            },
+            "start_engine": {
+                "name": "Nastartovat motor"
+            },
+            "stop_engine": {
+                "name": "Vypnout motor"
+            },
+            "turn_off_hazard_lights": {
+                "name": "Vypnout výstražná světla"
+            },
+            "turn_on_hazard_lights": {
+                "name": "Zapnout výstražná světla"
+            },
+            "flash_lights": {
+                "name": "Bliknout světly"
+            }
+        },
+        "climate": {
+            "climate": {
+                "name": "Klimatizace"
+            }
+        },
+        "device_tracker": {
+            "device_tracker": {
+                "name": "Sledování polohy"
+            }
+        },
+        "image": {
+            "vehicle_image": {
+                "name": "Obrázek vozidla"
+            }
+        },
+        "lock": {
+            "lock": {
+                "name": "Zámek"
+            }
+        },
+        "select": {
+            "flash_light_count": {
+                "name": "Počet bliknutí",
+                "state": {
+                    "2": "2 bliknutí",
+                    "10": "10 bliknutí",
+                    "30": "30 bliknutí"
+                }
+            },
+            "vehicle_image": {
+                "name": "Obrázek vozidla"
+            }
+        },
+        "sensor": {
+            "ev_charge_level": {
+                "name": "Úroveň nabití"
+            },
+            "ev_remaining_charging_time": {
+                "name": "Zbývající doba nabíjení (AC)"
+            },
+            "ev_quick_charge_time": {
+                "name": "Zbývající doba rychlonabíjení"
+            },
+            "ev_remaining_range": {
+                "name": "Zbývající dojezd"
+            },
+            "ev_remaining_range_bev": {
+                "name": "Zbývající dojezd BEV"
+            },
+            "front_left_tire_pressure": {
+                "name": "Tlak pneumatiky vpředu vlevo"
+            },
+            "front_right_tire_pressure": {
+                "name": "Tlak pneumatiky vpředu vpravo"
+            },
+            "fuel_distance_remaining": {
+                "name": "Dojezd na palivo"
+            },
+            "vehicle_status_timestamp": {
+                "name": "Poslední aktualizace stavu vozidla"
+            },
+            "position_timestamp": {
+                "name": "Poslední aktualizace polohy"
+            },
+            "fuel_remaining_percentage": {
+                "name": "Zbývající palivo v procentech"
+            },
+            "odometer": {
+                "name": "Počítadlo kilometrů"
+            },
+            "rear_left_tire_pressure": {
+                "name": "Tlak pneumatiky vzadu vlevo"
+            },
+            "rear_right_tire_pressure": {
+                "name": "Tlak pneumatiky vzadu vpravo"
+            },
+            "tire_pressure_timestamp": {
+                "name": "Poslední aktualizace tlaku pneumatik"
+            },
+            "drive1_drive_time": {
+                "name": "Jízda 1 – doba jízdy"
+            },
+            "drive1_distance": {
+                "name": "Jízda 1 – vzdálenost"
+            },
+            "next_maintenance_date": {
+                "name": "Datum příští údržby"
+            },
+            "next_maintenance_distance": {
+                "name": "Vzdálenost do příští údržby"
+            },
+            "drive1_fuel_efficiency": {
+                "name": "Jízda 1 – palivová účinnost"
+            },
+            "drive1_fuel_consumption": {
+                "name": "Jízda 1 – spotřeba paliva"
+            },
+            "drive1_fuel_amount": {
+                "name": "δ | Jízda 1 – množství paliva"
+            },
+            "dr_oil_deteriorate_level": {
+                "name": "Zbývající životnost oleje"
+            },
+            "drive1_fuel_efficiency_mpg": {
+                "name": "Jízda 1 – palivová účinnost (MPG)"
+            },
+            "drive1_fuel_consumption_gal100mi": {
+                "name": "Jízda 1 – spotřeba paliva (gal/100mi)"
+            },
+            "oil_level_status": {
+                "name": "δ | OilLevelStatusMonitor"
+            },
+            "next_oil_change_distance": {
+                "name": "Vzdálenost do příští výměny oleje"
+            },
+            "next_scr_maintenance_distance": {
+                "name": "Vzdálenost do příští údržby SCR"
+            },
+            "urea_tank_level": {
+                "name": "Hladina AdBlue"
+            },
+            "light_combi_sw_mode": {
+                "name": "Režim spínače světel",
+                "state": {
+                    "0": "Vypnuto",
+                    "1": "Automaticky",
+                    "2": "Obrysová světla",
+                    "3": "Potkávací světla"
+                }
+            },
+            "lght_sw_state": {
+                "name": "δ | LghtSwState"
+            },
+            "engine_state": {
+                "name": "δ | EngineState"
+            },
+            "power_control_status": {
+                "name": "δ | PowerControlStatus"
+            },
+            "soc_ecm_a_est": {
+                "name": "Stav nabití 12V baterie"
+            }
+        },
+        "switch": {
+            "charging": {
+                "name": "Nabíjení"
+            }
+        }
+    },
+    "services": {
+        "send_poi": {
+            "name": "Odeslat POI",
+            "description": "Odešle polohu GPS do navigačního systému vozidla jako POI (bod zájmu). Vyžaduje ve vozidle navigační SD kartu.",
+            "fields": {
+                "device_id": {
+                    "name": "Vozidlo",
+                    "description": "Vozidlo, do kterého se má poloha GPS odeslat."
+                },
+                "latitude": {
+                    "name": "Zeměpisná šířka",
+                    "description": "Zeměpisná šířka odesílané polohy."
+                },
+                "longitude": {
+                    "name": "Zeměpisná délka",
+                    "description": "Zeměpisná délka odesílané polohy."
+                },
+                "poi_name": {
+                    "name": "Název POI",
+                    "description": "Popisný název místa."
+                }
+            }
+        }
+    }
+}
