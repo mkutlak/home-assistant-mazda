@@ -2,7 +2,6 @@
   "config": {
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_account%]",
-      "cannot_connect": "[%key:common::config_flow::abort::cannot_connect%]",
       "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
       "oauth_error": "Error during OAuth authentication. Please try again.",
       "wrong_account": "Wrong account. Please authenticate with the same account.",
@@ -63,7 +62,7 @@
       },
       "auth_manual": {
         "title": "Sign in to Mazda",
-        "description": "Mobile app sign-in ends by handing off to the official app with a url that desktop browsers cannot open. Follow the instructions below and copy the callback address from a browser's developer console instead.\n\n1. [Open the Mazda sign-in]({authorize_url}). If no sign-in page loads at all, you must clear any mazda.com cookies from your browser first.\n2. Complete the Mazda sign-in form and click LOGIN. After clicking the button, **no new page loads and the browser appears to do nothing**. That is expected.\n3. Open the browser's developer tools (Chrome or Edge: F12, or ⌥⌘I on a Mac) and open the **Console** tab.\n4. Find a line containing `Failed to launch 'msauth://com.interrait.mymazda/...'` or similar, logged because the browser cannot open `msauth://` addresses.\n5. Right-click the `msauth://` address, select **Copy link address**, and paste it below.\n\nKeep this window open until you submit. The address is a one-time sign-in credential, do not include it in issue reports or screenshots.",
+        "description": "Mobile app sign-in ends by handing off to the official app with a url that desktop browsers cannot open. Follow the instructions below and copy the callback address from a browser's developer console instead.\n\n1. [Open the Mazda sign-in]({authorize_url}). If no sign-in page loads at all, you must clear any mazda.com cookies from your browser first.\n2. Complete the Mazda sign-in form and click LOGIN. After clicking the button, **no new page loads and the browser appears to do nothing**. That is expected.\n3. Open the browser's developer tools (Chrome or Edge: F12, or ⌥⌘I on a Mac) and open the **Console** tab.\n4. Find a line containing `Failed to launch 'msauth://com.interrait.mymazda/...'` or similar, logged because the browser cannot open `msauth://` addresses.\n5. Right-click the `msauth://` address, select **Copy link address**, and paste it below.\n\nKeep this window open until you submit. The address is a one-time sign-in credential, so do not include it in issue reports or screenshots.",
         "data": {
           "callback_url": "Callback URL"
         },
