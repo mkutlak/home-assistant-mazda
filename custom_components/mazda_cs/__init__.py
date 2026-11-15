@@ -31,6 +31,7 @@ from homeassistant.helpers import (
     service,
 )
 
+from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -384,6 +385,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: MazdaConfigEntry) -> boo
         update_method=async_update_data,
         # no-push interval until we verify permissions and FCM availability
         update_interval=POLL_INTERVAL_NO_PUSH,
+        # Push storms: first push refreshes at once, the rest wait out 60 s
+        # (HA's default 10 s cooldown allows 360 refreshes an hour).
+        request_refresh_debouncer=Debouncer(
+            hass, _LOGGER, cooldown=60, immediate=True
+        ),
     )
 
     async def async_update_health_data():
