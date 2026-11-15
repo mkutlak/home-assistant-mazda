@@ -111,7 +111,7 @@ class Client:  # noqa: D101
         self._home_bg_image_selection: dict[int, str] = {}  # vehicle_id → option label
         self._flash_light_counts: dict[
             int, int
-        ] = {}  # vehicle_id → CarFinderParameter (0/1/2)
+        ] = {}  # vehicle_id → CarFinderParameter (1/2/3)
 
     # Per-region locale and country code for the attach call, unsure if these are necessary
     _REGION_ATTACH_PARAMS = {
@@ -503,7 +503,7 @@ class Client:  # noqa: D101
     async def flash_lights(self, vehicle_id: int) -> None:  # noqa: D102
         car_finder_parameter = self._flash_light_counts.get(
             vehicle_id, 1
-        )  # default: 10 flashes
+        )  # fallback: 2 flashes; the select entity sets the count (default 10) at setup
         await self.controller.flash_lights(vehicle_id, car_finder_parameter)
 
     async def unlock_doors(self, vehicle_id):  # noqa: D102
