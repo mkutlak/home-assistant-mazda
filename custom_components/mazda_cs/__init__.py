@@ -193,15 +193,17 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
         vehicle_id = 0
         api_client = None
+        owner_entry = None
         for loaded_entry in hass.config_entries.async_loaded_entries(DOMAIN):
             entry_data: MazdaEntryData = loaded_entry.runtime_data
             for vehicle in entry_data.vehicles:
                 if vehicle["vin"] == vin:
                     vehicle_id = vehicle["id"]
                     api_client = entry_data.client
+                    owner_entry = loaded_entry
                     break
 
-        if vehicle_id == 0 or api_client is None:
+        if vehicle_id == 0 or api_client is None or owner_entry is None:
             raise HomeAssistantError("Vehicle ID not found")
 
         api_method = getattr(api_client, service_call.service)
@@ -210,6 +212,12 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             longitude = service_call.data["longitude"]
             poi_name = service_call.data["poi_name"]
             await api_method(vehicle_id, latitude, longitude, poi_name)
+        except ConfigEntryAuthFailed as ex:
+            # HA starts re-auth only for setup and coordinator errors, not service calls.
+            owner_entry.async_start_reauth(hass)
+            raise HomeAssistantError(
+                "Mazda login expired; re-authenticate the integration"
+            ) from ex
         except Exception as ex:
             raise HomeAssistantError(ex) from ex
 
