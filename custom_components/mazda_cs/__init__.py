@@ -44,6 +44,7 @@ from .const import (
     CONF_ENABLE_VEHICLE_IMAGES,
     CONF_FCM_CREDENTIALS,
     DOMAIN,
+    POLL_INTERVAL_NO_PUSH,
 )
 from .fcm_listener import MazdaFcmListener
 from .pymazda.push._conductor import conductor_device_id_from_user_sub
@@ -370,8 +371,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: MazdaConfigEntry) -> boo
         _LOGGER,
         name=DOMAIN,
         update_method=async_update_data,
-        # start with 3 min interval until we verify permissions and FCM availability
-        update_interval=timedelta(minutes=3),
+        # no-push interval until we verify permissions and FCM availability
+        update_interval=POLL_INTERVAL_NO_PUSH,
     )
 
     async def async_update_health_data():
@@ -537,8 +538,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: MazdaConfigEntry) -> boo
     await coordinator.async_config_entry_first_refresh()
 
     # Verify the account has vehicle status-alert permission for each vehicle.
-    # Missing permission keeps the coordinator at the degraded 3-min poll interval;
-    # otherwise the FCM listener is allowed to promote it to 6 min once MCS is connected.
+    # Missing permission keeps the coordinator at the no-push poll interval (30 min);
+    # otherwise the FCM listener is allowed to promote it to 1 h once MCS is connected.
     status_alert_available = True
     health_report_available = True
     for vehicle in coordinator.data or []:
