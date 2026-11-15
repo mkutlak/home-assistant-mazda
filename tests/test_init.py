@@ -9,7 +9,7 @@ base class shared by every platform.
 """
 
 import logging
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -363,3 +363,37 @@ async def test_send_poi_rejects_overlong_name(hass: HomeAssistant) -> None:
         DOMAIN, "send_poi", _poi(device_id, "x" * 100), blocking=True
     )
     send_poi.assert_awaited_once()
+
+
+async def test_failed_setup_stops_push_listener(hass: HomeAssistant) -> None:
+    """SETUP_RETRY runs no async_unload_entry, so the listener must stop on its own."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=2,
+        minor_version=4,
+        data={CONF_REGION: "MNAO", "token": MOCK_TOKEN},
+        options={CONF_ENABLE_PUSH: True},
+    )
+    entry.add_to_hass(hass)
+    client = AsyncMock()
+    client.get_user_info.return_value = {}
+    client.attach.return_value = {}
+    client.get_vehicles.side_effect = Exception("Mazda is down")
+    listener = MagicMock(async_start=AsyncMock(return_value="fcm-token"))
+    listener.async_stop = AsyncMock()
+
+    with (
+        patch("custom_components.mazda_cs.MazdaAPI", return_value=client),
+        patch("custom_components.mazda_cs.MazdaFcmListener", return_value=listener),
+        patch(
+            "homeassistant.helpers.config_entry_oauth2_flow.OAuth2Session"
+            ".async_ensure_token_valid",
+            AsyncMock(),
+        ),
+    ):
+        assert not await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.SETUP_RETRY
+    listener.async_start.assert_awaited_once()
+    listener.async_stop.assert_awaited_once()
