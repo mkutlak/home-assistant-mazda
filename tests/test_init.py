@@ -9,12 +9,15 @@ base class shared by every platform.
 """
 
 import logging
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_REGION
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry as er
+from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.setup import async_setup_component
 
@@ -285,3 +288,42 @@ async def test_enable_notify_swallows_errors() -> None:
     await _enable_all_notify_settings(client, [{"id": 3, "vin": "VIN3"}])
 
     client.set_notify_setting.assert_not_awaited()
+
+
+async def _setup_send_poi(
+    hass: HomeAssistant, send_poi: AsyncMock
+) -> tuple[MockConfigEntry, str]:
+    """A loaded entry owning VEHICLE, whose client's send_poi is the given mock."""
+    assert await async_setup_component(hass, DOMAIN, {})
+    entry = MockConfigEntry(
+        domain=DOMAIN, data={CONF_REGION: "MNAO"}, state=ConfigEntryState.LOADED
+    )
+    entry.add_to_hass(hass)
+    entry.runtime_data = MagicMock(
+        vehicles=[VEHICLE], client=MagicMock(send_poi=send_poi)
+    )
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, VEHICLE["vin"])}
+    )
+    return entry, device.id
+
+
+def _poi(device_id: str, name: str = "Home") -> dict:
+    return {"device_id": device_id, "latitude": 50.0, "longitude": 14.4, "poi_name": name}
+
+
+async def test_send_poi_auth_failure_starts_reauth(hass: HomeAssistant) -> None:
+    """An expired login during send_poi starts re-auth for the owning entry."""
+    entry, device_id = await _setup_send_poi(
+        hass, AsyncMock(side_effect=ConfigEntryAuthFailed("token revoked"))
+    )
+
+    with pytest.raises(HomeAssistantError, match="re-authenticate"):
+        await hass.services.async_call(DOMAIN, "send_poi", _poi(device_id), blocking=True)
+    await hass.async_block_till_done()
+
+    assert any(
+        flow["context"]["source"] == "reauth"
+        and flow["context"]["entry_id"] == entry.entry_id
+        for flow in hass.config_entries.flow.async_progress()
+    )
