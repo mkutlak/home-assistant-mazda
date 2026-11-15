@@ -7,6 +7,7 @@ missing, which used to raise ``TypeError: strptime() argument 1 must be str, not
 None`` and trap the config entry in a setup-retry loop.
 """
 
+import asyncio
 import datetime
 import logging
 import ssl
@@ -357,3 +358,48 @@ async def test_600100_on_attach_raises_without_reattaching() -> None:
 
     assert send.await_count == 1
     conn.session_refresh_provider.assert_not_awaited()
+
+
+async def test_concurrent_requests_never_overlap() -> None:
+    """One account, one request in flight: Mazda errors on simultaneous requests."""
+    conn, _ = _connection(MagicMock(status=200))
+    in_flight = 0
+    max_in_flight = 0
+
+    async def send(*args, **kwargs):
+        nonlocal in_flight, max_in_flight
+        in_flight += 1
+        max_in_flight = max(max_in_flight, in_flight)
+        await asyncio.sleep(0)
+        in_flight -= 1
+
+    conn._Connection__send_api_request = send
+    await asyncio.gather(
+        conn.api_request("POST", "a", needs_keys=False),
+        conn.api_request("POST", "b", needs_keys=False),
+    )
+
+    assert max_in_flight == 1
+
+
+async def test_reattach_inside_retry_does_not_deadlock() -> None:
+    """The lock is released before recovery runs, so attach can take it."""
+    conn, _ = _connection(MagicMock(status=200))
+    calls = []
+
+    async def send(method, uri, *args, **kwargs):
+        calls.append(uri)
+        if uri == "x" and calls.count("x") == 1:
+            raise MazdaSessionExpiredException("conflict")
+
+    conn._Connection__send_api_request = send
+
+    async def reattach():
+        await conn.api_request("POST", "attach", needs_keys=False)
+
+    conn.session_refresh_provider = reattach
+
+    async with asyncio.timeout(5):
+        await conn.api_request("POST", "x", needs_keys=False)
+
+    assert calls == ["x", "attach", "x"]

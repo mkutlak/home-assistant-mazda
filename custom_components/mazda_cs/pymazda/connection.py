@@ -222,6 +222,7 @@ class Connection:
         self.sign_key = None
 
         self.access_token = None
+        self._request_lock = asyncio.Lock()
 
         self.sensor_data_builder = SensorDataBuilder()
 
@@ -370,9 +371,11 @@ class Connection:
         )  # noqa: G004
 
         try:
-            return await self.__send_api_request(
-                method, uri, query_dict, body_dict, needs_keys, needs_auth
-            )
+            # Lock only the exchange: recovery below (re-attach) sends requests too.
+            async with self._request_lock:
+                return await self.__send_api_request(
+                    method, uri, query_dict, body_dict, needs_keys, needs_auth
+                )
         except MazdaAPIEncryptionException as ex:
             if "checkVersion" in uri:
                 raise MazdaException(
