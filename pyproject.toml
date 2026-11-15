@@ -6,6 +6,9 @@ requires-python = ">=3.14.2"
 [tool.uv]
 # Not an installable package; this file only carries test dependencies.
 package = false
+# shortcut: HA 2026.10.4 pins Pillow 12.3.0 (43 Dependabot alerts); drop this once
+# pytest-homeassistant-custom-component ships HA 2026.11+ (Pillow 13).
+override-dependencies = ["pillow>=13.0.0"]
 
 [tool.pytest.ini_options]
 # pytest-homeassistant-custom-component ships async autouse fixtures, so
