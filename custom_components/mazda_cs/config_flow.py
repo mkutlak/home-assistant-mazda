@@ -304,7 +304,7 @@ class MazdaOAuth2FlowHandler(
             )
         self._abort_if_unique_id_configured()
 
-        # Attempt to fetch the account email address for a friendlier title
+        # No email in the title: HA core puts entry titles in its warning logs.
         title = f"Mazda ({user_id[:8]})"
         try:
 
@@ -317,9 +317,6 @@ class MazdaOAuth2FlowHandler(
             client = MazdaAPI(user_id, self._region, _token_provider)
             user_info = await client.get_user_info()
             await client.close()
-            email = user_info.get("userInfo", {}).get("contactMailAddress", "")
-            if email:
-                title = f"Mazda ({email})"
             cust_id = user_info.get("custId", "")
             if cust_id:
                 data["conductor_customer_id"] = cust_id
@@ -328,7 +325,7 @@ class MazdaOAuth2FlowHandler(
                 data["conductor_usher_id"] = usher_id
         except Exception:  # noqa: BLE001
             _LOGGER.debug(
-                "Could not fetch account email for title; using user_id fallback"
+                "Could not fetch user info; Conductor customer IDs left unset"
             )
 
         # non-MNAO regions use internalUserId (partner2Id) for Conductor userId

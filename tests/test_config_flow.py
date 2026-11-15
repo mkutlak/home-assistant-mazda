@@ -183,7 +183,7 @@ async def test_manual_paste_creates_entry(
         )
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["title"] == "Mazda (driver@example.com)"
+    assert result["title"] == f"Mazda ({_SUB[:8]})"  # no email: titles land in HA logs
     assert result["result"].unique_id == _SUB
     assert result["data"]["region"] == "MNAO"
     # Same shape the OAuth callback view would have handed the flow
