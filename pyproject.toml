@@ -16,5 +16,6 @@ norecursedirs = [".git", "custom_components"]
 
 [dependency-groups]
 test = [
+    "protobuf>=6.30.2",
     "pytest-homeassistant-custom-component==0.13.375",
 ]
