@@ -8,7 +8,7 @@ None`` and trap the config entry in a setup-retry loop.
 """
 
 import datetime
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -16,6 +16,11 @@ from custom_components.mazda_cs.pymazda.client import (
     Client,
     _parse_occurrence_date,
     _warn_undocumented_fields,
+)
+from custom_components.mazda_cs.pymazda.connection import Connection
+from custom_components.mazda_cs.pymazda.exceptions import (
+    MazdaException,
+    MazdaRateLimitException,
 )
 
 VEHICLE_ID = 12345
@@ -252,3 +257,33 @@ async def test_get_vehicle_status_warns_on_undocumented_field(caplog) -> None:
         await client.get_vehicle_status(VEHICLE_ID)
 
     assert any("PwPosRl" in r.getMessage() for r in caplog.records)
+
+
+def _connection(response: MagicMock) -> tuple[Connection, MagicMock]:
+    session = MagicMock()
+    session.request = AsyncMock(return_value=response)
+    return Connection("test-sub", "MNAO", AsyncMock(), websession=session), session
+
+
+async def test_rate_limited_response_is_released_and_request_has_timeout() -> None:
+    """A 429 frees its pooled connection; requests never wait the 5-minute default."""
+    resp = MagicMock(status=429)
+    conn, session = _connection(resp)
+
+    with pytest.raises(MazdaRateLimitException):
+        await conn._Connection__send_api_request("POST", "service/checkVersion")
+
+    resp.release.assert_called_once()
+    assert session.request.call_args.kwargs["timeout"].total == 30
+
+
+async def test_check_version_request_has_timeout() -> None:
+    """The explicit-URL checkVersion request also sets a timeout."""
+    resp = MagicMock(status=200)
+    resp.json = AsyncMock(return_value={"state": "E", "errorCode": 400007})
+    conn, session = _connection(resp)
+
+    with pytest.raises(MazdaException):
+        await conn._Connection__api_request_to_url("POST", "https://x/checkVersion")
+
+    assert session.request.call_args.kwargs["timeout"].total == 30
