@@ -15,11 +15,16 @@ import pytest
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_REGION
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.core import Context, HomeAssistant
+from homeassistant.exceptions import (
+    ConfigEntryAuthFailed,
+    HomeAssistantError,
+    Unauthorized,
+)
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.setup import async_setup_component
+import voluptuous as vol
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -327,3 +332,34 @@ async def test_send_poi_auth_failure_starts_reauth(hass: HomeAssistant) -> None:
         and flow["context"]["entry_id"] == entry.entry_id
         for flow in hass.config_entries.flow.async_progress()
     )
+
+
+async def test_send_poi_is_admin_only(hass: HomeAssistant, hass_read_only_user) -> None:
+    """A non-admin user cannot push a destination to the car."""
+    send_poi = AsyncMock()
+    _, device_id = await _setup_send_poi(hass, send_poi)
+
+    with pytest.raises(Unauthorized):
+        await hass.services.async_call(
+            DOMAIN,
+            "send_poi",
+            _poi(device_id),
+            blocking=True,
+            context=Context(user_id=hass_read_only_user.id),
+        )
+    send_poi.assert_not_called()
+
+
+async def test_send_poi_rejects_overlong_name(hass: HomeAssistant) -> None:
+    """poi_name is capped at 100 characters before it reaches the Mazda API."""
+    send_poi = AsyncMock()
+    _, device_id = await _setup_send_poi(hass, send_poi)
+
+    with pytest.raises(vol.Invalid):
+        await hass.services.async_call(
+            DOMAIN, "send_poi", _poi(device_id, "x" * 101), blocking=True
+        )
+    await hass.services.async_call(
+        DOMAIN, "send_poi", _poi(device_id, "x" * 100), blocking=True
+    )
+    send_poi.assert_awaited_once()
