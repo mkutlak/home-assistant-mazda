@@ -313,3 +313,19 @@ def test_sigalgs_missing_libssl_does_not_break_import(caplog) -> None:
     ):
         _configure_sigalgs(ctx)
     assert "libssl.so.3" in caplog.text
+
+
+async def test_access_token_provider_runs_before_every_request() -> None:
+    """The provider is asked per request, so an expired token is never sent."""
+    conn, _ = _connection(MagicMock(status=200))
+    conn.access_token_provider = AsyncMock(side_effect=["token-1", "token-2"])
+    sent_tokens = []
+
+    async def send(*args, **kwargs):
+        sent_tokens.append(conn.access_token)
+
+    conn._Connection__send_api_request = send
+    await conn.api_request("POST", "x", needs_keys=False, needs_auth=True)
+    await conn.api_request("POST", "x", needs_keys=False, needs_auth=True)
+
+    assert sent_tokens == ["token-1", "token-2"]

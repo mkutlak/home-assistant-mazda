@@ -392,9 +392,8 @@ class Connection:
         except MazdaTokenExpiredException:
             self.logger.info(
                 "Server reports access token was expired (600002). "
-                "Resetting cached token — will re-fetch on retry."
+                "Fetching a fresh token and retrying."
             )
-            self.access_token = None
             return await self.__api_request_retry(
                 method,
                 uri,
@@ -590,9 +589,8 @@ class Connection:
             await self.__retrieve_keys()
 
     async def __ensure_token_is_valid(self):
-        if self.access_token is None:
-            self.logger.info("No access token present. Fetching from provider.")
-            self.access_token = await self.access_token_provider()
+        # The provider refreshes locally-expired tokens, so ask it on every request.
+        self.access_token = await self.access_token_provider()
 
     async def __retrieve_keys(self):
         self.logger.info("Retrieving encryption keys from %s", self.base_url)
