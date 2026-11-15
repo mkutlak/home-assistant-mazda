@@ -214,7 +214,7 @@ class Controller:  # noqa: D101
         return response
 
     async def flash_lights(self, internal_vin, car_finder_parameter=1):  # noqa: D102
-        # car_finder_parameter: 0=2 flashes, 1=10 flashes, 2=30 flashes (from APK SDMHazard)
+        # car_finder_parameter: 1=2 flashes, 2=10 flashes, 3=30 flashes (Client._FLASH_COUNT_TO_PARAM)
         post_body = {
             "internaluserid": "__INTERNAL_ID__",
             "internalvin": str(internal_vin),
