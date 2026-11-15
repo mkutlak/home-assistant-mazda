@@ -8,7 +8,9 @@ None`` and trap the config entry in a setup-retry loop.
 """
 
 import datetime
-from unittest.mock import AsyncMock, MagicMock
+import logging
+import ssl
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -17,7 +19,11 @@ from custom_components.mazda_cs.pymazda.client import (
     _parse_occurrence_date,
     _warn_undocumented_fields,
 )
-from custom_components.mazda_cs.pymazda.connection import Connection
+from custom_components.mazda_cs.pymazda.connection import (
+    SSL_SIGNATURE_ALGORITHMS,
+    Connection,
+    _configure_sigalgs,
+)
 from custom_components.mazda_cs.pymazda.exceptions import (
     MazdaException,
     MazdaRateLimitException,
@@ -287,3 +293,23 @@ async def test_check_version_request_has_timeout() -> None:
         await conn._Connection__api_request_to_url("POST", "https://x/checkVersion")
 
     assert session.request.call_args.kwargs["timeout"].total == 30
+
+
+def test_sigalgs_use_stdlib_when_available() -> None:
+    """Python 3.15+ sets the ClientHello sigalgs without ctypes (set_server_sigalgs)."""
+    ctx = MagicMock()
+    _configure_sigalgs(ctx)
+    ctx.set_server_sigalgs.assert_called_once_with(":".join(SSL_SIGNATURE_ALGORITHMS))
+
+
+def test_sigalgs_missing_libssl_does_not_break_import(caplog) -> None:
+    """Without libssl.so.3 the ctypes path logs a warning instead of failing import."""
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    if hasattr(ctx, "set_server_sigalgs"):
+        pytest.skip("Python 3.15+ never takes the ctypes path")
+    with (
+        patch("ctypes.CDLL", side_effect=OSError("libssl.so.3: not found")),
+        caplog.at_level(logging.WARNING),
+    ):
+        _configure_sigalgs(ctx)
+    assert "libssl.so.3" in caplog.text

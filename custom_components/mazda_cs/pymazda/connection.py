@@ -47,12 +47,29 @@ SSL_SIGNATURE_ALGORITHMS = [
     "rsa_pkcs1_sha512",
     "rsa_pkcs1_sha1",
 ]
-with SSLContextConfigurator(
-    ssl_context, libssl_path="libssl.so.3"
-) as ssl_context_configurator:
-    ssl_context_configurator.configure_signature_algorithms(
-        ":".join(SSL_SIGNATURE_ALGORITHMS)
-    )
+
+
+def _configure_sigalgs(context: ssl.SSLContext) -> None:
+    """Offer the app's TLS signature algorithms in the ClientHello."""
+    sigalgs = ":".join(SSL_SIGNATURE_ALGORITHMS)
+    # Python 3.15+: despite the name, this sets the sigalgs the client offers
+    # (SSL_CTX_set1_sigalgs_list); set_client_sigalgs is for client certificates.
+    if hasattr(context, "set_server_sigalgs"):
+        context.set_server_sigalgs(sigalgs)
+        return
+    try:
+        with SSLContextConfigurator(
+            context, libssl_path="libssl.so.3"
+        ) as ssl_context_configurator:
+            ssl_context_configurator.configure_signature_algorithms(sigalgs)
+    except OSError as ex:
+        logging.getLogger(__name__).warning(
+            "Could not load libssl.so.3 (%s); using default TLS signature algorithms",
+            ex,
+        )
+
+
+_configure_sigalgs(ssl_context)
 
 # --- Android app constants (confirmed from com.interrait.mymazda 9.0.8 APK) ---
 IV = "0102030405060708"
