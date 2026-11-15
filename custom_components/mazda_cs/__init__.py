@@ -28,6 +28,7 @@ from homeassistant.helpers import (
     config_validation as cv,
     device_registry as dr,
     entity_registry as er,
+    service,
 )
 
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -238,7 +239,9 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
         return device_id
 
-    hass.services.async_register(
+    # Admin-only: it pushes a destination to the car. Automations have no user, so still work.
+    service.async_register_admin_service(
+        hass,
         DOMAIN,
         "send_poi",
         async_handle_service_call,
@@ -247,7 +250,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                 vol.Required("device_id"): vol.All(cv.string, validate_mazda_device_id),
                 vol.Required("latitude"): cv.latitude,
                 vol.Required("longitude"): cv.longitude,
-                vol.Required("poi_name"): cv.string,
+                vol.Required("poi_name"): vol.All(cv.string, vol.Length(max=100)),
             }
         ),
     )
